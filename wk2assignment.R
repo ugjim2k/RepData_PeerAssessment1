@@ -41,7 +41,7 @@ loadData <- function() {
 
 cleanData <- function(data_file) {
   data_file$date <- ymd(data_file$date)
-  
+  data_file
 }
 
 # Executing all functions for 'testing'
@@ -50,8 +50,8 @@ main <- function() {
   checkPackages()
   
   # Loading and preprocessing the data
-  # dataFile <- loadData()
-  # cleanData(dataFile)
+  dataFile <- loadData()
+  dataFile <- cleanData(dataFile)
   
   # What is mean  number of steps taken per day?
   totalsteps <- dataFile %>% group_by(date) %>% 
@@ -60,13 +60,21 @@ main <- function() {
   totalsteps %>% ggplot(aes(total)) + geom_histogram(binwidth = 350) + 
     ggtitle('Histogram of total number of steps')
   
-  dataFile %>% group_by(date) %>% 
+  summaryData <- dataFile %>% group_by(date) %>% 
     summarise(total = sum(steps, na.rm = TRUE), 
               mean = mean(steps, na.rm = TRUE), 
               median = median(steps, na.rm = TRUE))
   
   # What is the average daily activity pattern?
+  # (Will need to add text to mention NaN values are causing gaps in line)
+  ggplot(summaryData, aes(date, mean)) + 
+      geom_line() + 
+      labs(title = 'Time Series Plot', x = 'Date', y = 'Average Step Count')
+  
+  (summaryData %>% filter(mean == max(mean, na.rm = TRUE))) $ date
+  
+  ## Imputing missing values
+  NATotals <- sum(is.na(dataFile)) # Total number of NAs
   
   
-  
-}
+ }
