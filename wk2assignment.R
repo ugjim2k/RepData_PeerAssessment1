@@ -82,7 +82,7 @@ main <- function() {
         geom_line() + 
         labs(title = 'Time Series Plot', x = 'Date', y = 'Average Step Count')
     
-    (summaryData %>% filter(mean == max(mean, na.rm = TRUE))) $ date
+    summaryData[which.max(summaryData$mean), ]$date
     
     ## Imputing missing values
     ## -----------------------------------
