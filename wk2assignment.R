@@ -39,14 +39,15 @@ loadData <- function() {
     tbl_df(read.csv(file.path(dataFolder, extractedFile)))
 }
 
-cleanData <- function(data_file, valueOfNASteps = 0) {
+cleanData <- function(data_file, valueOfNASteps) {
     # Clean up the dates usling lubridate and replace NA in steps field
     # with value in valueOfNASteps argument
     
     data_file$date <- ymd(data_file$date)
-    data_file$steps <- replace(
-        dataFile$steps, which(is.na(dataFile$steps)), 
-        valueOfNASteps)
+    if(!missing(valueOfNASteps))
+        data_file$steps <- replace(
+            dataFile$steps, which(is.na(dataFile$steps)), 
+            valueOfNASteps)
     
     data_file
 }
@@ -59,8 +60,8 @@ main <- function() {
     # Loading the original data set into the dataSet variable
     dataSet <- loadData()
     
-    # Cleaning steps in original data set by replacing NA with 0 (default)
-    dataFile <- cleanData(dataSet)
+    # Cleaning steps in original data set by replacing NA with 0
+    dataFile <- cleanData(dataSet, 0)
     
     # What is mean  number of steps taken per day?
     # -------------------------------------------------
@@ -71,9 +72,9 @@ main <- function() {
         ggtitle('Histogram of total number of steps')
     
     summaryData <- dataFile %>% group_by(date) %>% 
-        summarise(total = sum(steps, na.rm = TRUE), 
-                  mean = mean(steps, na.rm = TRUE), 
-                  median = median(steps, na.rm = TRUE))
+        summarise(total = sum(steps), 
+                  mean = mean(steps), 
+                  median = median(steps))
     
     # What is the average daily activity pattern?
     # ------------------------------------------------
@@ -88,5 +89,5 @@ main <- function() {
     NATotals <- sum(is.na(dataFile)) # Total number of NAs
     
     #Let's merge the summaryData object with the dataFile object to create one.
-    merge(dataFile, summaryData, by = 'date') %>% head(500)
+    merge(dataFile, summaryData, by = 'date') %>% filter(mean > 0)
 }
