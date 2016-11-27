@@ -13,13 +13,15 @@ loaded into the R environment.
 1. lubridate
 2. dplyr
 3. ggplot2
+4. knitr
+5. rmarkdown
 
 We shall also set some default variables so we can use them throughout the 
 exercise.
 
 ```{r loadpackages, message=FALSE, warning=FALSE}
 # Required packages
-packages <- c('lubridate', 'dplyr', 'ggplot2')
+packages <- c('lubridate', 'dplyr', 'ggplot2', 'knitr', 'rmarkdown')
 
 # Default variables
 dataURL <- 'https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip'
