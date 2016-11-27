@@ -89,5 +89,32 @@ main <- function() {
   NATotals <- sum(is.na(dataFile)) # Total number of NAs
   
   #Let's merge the summaryData object with the dataFile object to create one.
-  merge(dataFile, summaryData, by = 'date') %>% filter(mean > 0)
+  mrg <- merge(cleanData(dataSet), summaryData, by = 'date')
+  NADataSet <- cleanData(dataSet)
+  indices <- which(is.na(NADataSet$steps))
+  NADataSet$steps <- replace(NADataSet$steps, indices, mrg$mean[indices])
+  
+  NADataSet %>% group_by(date) %>% 
+    summarise(
+      totalsteps = sum(steps),
+      mean = mean(steps), 
+      median = median(steps))
+  
+  ggplot(NADataSet, aes(steps)) + geom_histogram()
+  
+  ## Are there differences in activity patterns between weekdays and weekends?
+  #---------------------------------------------------------------------------
+  weekend <- c('Sat', 'Sun')
+  title <- c('Weekend', 'Weekday')
+  NADataSet %>% 
+    merge(summaryData, by = 'date') %>% 
+    mutate(weekday = title[weekdays(date, TRUE) %in% weekend + 1]) %>% 
+    group_by(weekday, interval) %>% 
+    summarise(AverageSteps = mean(steps)) %>% 
+    ggplot(aes(interval, AverageSteps)) + 
+      geom_line() + 
+      facet_grid(weekday ~ .) +
+      ggtitle('Weekday and Weekend Comparison') +
+      xlab('Interval') + 
+      ylab('Number of Average Steps')
 }
