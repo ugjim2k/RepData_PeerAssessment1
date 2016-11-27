@@ -2,6 +2,8 @@
 
 
 ## Loading and preprocessing the data
+
+
 In order to complete the assignment, we are going to need some libraries to be 
 loaded into the R environment.  
 
@@ -15,24 +17,6 @@ We shall also set some default variables so we can use them throughout the
 exercise.
 
 
-```r
-# Required packages
-packages <- c('lubridate', 'dplyr', 'ggplot2', 'knitr', 'rmarkdown')
-
-# Default variables
-dataURL <- 'https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip'
-dataFolder <- file.path(getwd(), 'data/')
-filename <- 'activity.zip'
-extractedFile <- 'activity.csv'
-
-# Checking packages are downloaded and are loaded in environment.
-missingPackages <- packages[(!(packages %in% installed.packages()))]
-if(length(missingPackages) > 0)
-  install.packages(missingPackages)
-
-if(!all(unlist(lapply(packages, require, character.only = TRUE))))
-  stop('Cannot install packages. Quitting...')
-```
 We also need some functions to help with the processing, namely:
 
 * checkPackages() - to load required packages into the R environment.
@@ -41,47 +25,12 @@ We also need some functions to help with the processing, namely:
 
 Let's set these up now...
 
-```r
-# Function to download and load dataset. Returns loaded dataset
-loadData <- function() {
-  fullFileName <- file.path(dataFolder, filename)
-  
-  dir.create(dataFolder, showWarnings = FALSE)
-  #  download.file(dataURL, fullFileName)
-  unzip(zipfile = fullFileName, exdir = dataFolder, files = extractedFile)
-  
-  # Return dataset
-  tbl_df(read.csv(file.path(dataFolder, extractedFile)))
-}
-
-# Function to clean the loaded data set and to specification. Returns 
-# cleaned data set 
-cleanData <- function(data_file, valueOfNASteps) {
-  # Clean up the dates usling lubridate and replace NA in steps field
-  # with value in valueOfNASteps argument
-  
-  data_file$date <- ymd(data_file$date)
-  if(!missing(valueOfNASteps))
-    data_file$steps <- replace(
-      data_file$steps, which(is.na(data_file$steps)), 
-      valueOfNASteps)
-  
-  data_file
-}
-```
 With the above done, we need to load the data set into the environment and make
 it ready to answer the exercise questions. Let's load the original data set, 
 and a cleaned data sets that sets the **NA** values of **step** to the value
 **zero**.
 
 
-```r
-# Loading the original data set into the dataSet variable
-dataSet <- loadData()
-
-# Cleaning steps in original data set by replacing NA with 0
-dataFile <- cleanData(dataSet, 0)
-```
 So with the preprocessing done, let's try and answer some of the questions.
 
 ## 1. What is mean total number of steps taken per day?
@@ -90,13 +39,6 @@ as 570608 steps.
 
 We can calculate the mean number of steps for each day as below: 
 
-
-```r
-totalsteps <- dataFile %>% group_by(date) %>% 
-  summarise(total = sum(steps, na.rm = TRUE))
-
-data.frame(totalsteps) # To print out full list.
-```
 
 ```
 ##          date total
@@ -165,25 +107,10 @@ data.frame(totalsteps) # To print out full list.
 We can also make a __histogram__ of the above totals to make it easier to 
 visualise: 
 
-
-```r
-totalsteps %>% ggplot(aes(total)) + geom_histogram(binwidth = 350) + 
-  ggtitle('Histogram of total number of steps')
-```
-
-![](PA1_template_files/figure-html/averageStepsHistogram-1.png)<!-- -->
+![](Figs/averageStepsHistogram-1.png)<!-- -->
 Let's also calculate the mean and median for each day and save it. It may come 
 in handy later on...
 
-
-```r
-summaryData <- dataFile %>% group_by(date) %>% 
-  summarise(total = sum(steps), 
-            mean = mean(steps), 
-            median = median(steps))
-
-data.frame(summaryData)
-```
 
 ```
 ##          date total       mean median
@@ -253,14 +180,7 @@ data.frame(summaryData)
 
 Let's have a look at the average daily activity pattern over time...
 
-
-```r
-ggplot(summaryData, aes(date, mean)) + 
-  geom_line() + 
-  labs(title = 'Time Series Plot', x = 'Date', y = 'Average Step Count')
-```
-
-![](PA1_template_files/figure-html/activityPattern-1.png)<!-- -->
+![](Figs/activityPattern-1.png)<!-- -->
 
 From the graph, we can see that the maximum numebr of step counts occurs on 
 2012-11-23.
@@ -274,23 +194,8 @@ data set with the summary means and then replace the **NA** values with the
 respective means to create a new cleaned data set:
 
 
-```r
-mrg <- merge(cleanData(dataSet), summaryData, by = 'date')
-NADataSet <- cleanData(dataSet)
-indices <- which(is.na(NADataSet$steps))
-NADataSet$steps <- replace(NADataSet$steps, indices, mrg$mean[indices])
-```
 
 So how does the new data set look like?
-
-```r
-NADataSet %>% group_by(date) %>% 
-  summarise(
-    totalsteps = sum(steps),
-    mean = mean(steps), 
-    median = median(steps)) %>%
-  data.frame
-```
 
 ```
 ##          date totalsteps       mean median
@@ -359,16 +264,7 @@ NADataSet %>% group_by(date) %>%
 
 Demonstrating the number of steps taken each day on a histogram gives:
 
-
-```r
-ggplot(NADataSet, aes(steps)) + geom_histogram()
-```
-
-```
-## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
-```
-
-![](PA1_template_files/figure-html/unnamed-chunk-2-1.png)<!-- -->
+![](Figs/unnamed-chunk-2-1.png)<!-- -->
 
 ## 4. Are there differences in activity patterns between weekdays and weekends?
 To answer this, will first have to determine which of the days in the data
@@ -376,36 +272,4 @@ set are on weekdays and weekends, and then plot the data on a line graphs -
 weekend and weekday.
 
 So, let's see how to do this.
-
-```r
-# Let's identify which days make the weekend.
-weekend <- c('Sat', 'Sun')
-
-# And set the classifiers for marking each day
-title <- c('Weekend', 'Weekday')
-
-NADataSet %>%
-  
-  # Merge the data set with the Summary Data set.
-  merge(summaryData, by = 'date') %>% 
- 
-   # And mark each day as weekened or weekday. We add 1 as FALSE translates
-  # to 0 and 1 translates to TRUE, but vector indices begin from 1.
-  mutate(weekday = title[weekdays(date, TRUE) %in% weekend + 1]) %>% 
-  
-  # Summarise the data by grouping and averaging the steps by interval and day
-  group_by(weekday, interval) %>% 
-  summarise(AverageSteps = mean(steps)) %>% 
-  
-  # Plot the data using ggplot by weekday and weekend
-  ggplot(aes(interval, AverageSteps)) + 
-  geom_line() + 
-  facet_grid(weekday ~ .) +
-  
-  # and clean the plot up a bit.
-  ggtitle('Weekday and Weekend Comparison') +
-  xlab('Interval') + 
-  ylab('Number of Average Steps')
-```
-
-![](PA1_template_files/figure-html/weekGraph-1.png)<!-- -->
+![](Figs/weekGraph-1.png)<!-- -->
